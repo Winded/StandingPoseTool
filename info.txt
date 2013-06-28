@@ -1,0 +1,6 @@
+"AddonInfo"
+{
+	"name" "Standing Pose Tool"
+	"author_name" "author"
+	"info" "This small tool can pose a ragdoll to it's model pose, which usually is a standing pose for ragdolls. It does not work properly with all ragdolls, but for most of them it does."
+}
