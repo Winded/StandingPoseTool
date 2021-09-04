@@ -32,23 +32,17 @@ propt.Receive = function( self, length, player )
 	local angle = (tr.HitPos - player:GetPos()):Angle()
 	ent:SetAngles(Angle(0,angle.y-180,0))
 	ent:Spawn()
-	for i=0,rag:GetPhysicsObjectCount()-1 do
-		local phys = rag:GetPhysicsObjectNum(i)
-		local b = rag:TranslatePhysBoneToBone(i)
-		local pos,ang = ent:GetBonePosition(b)
-		phys:EnableMotion(true)
-		phys:Wake()
-		phys:SetPos(pos)
-		phys:SetAngles(ang)
-		if string.sub(rag:GetBoneName(b),1,4) == "prp_" then
-			phys:EnableMotion(true)
-			phys:Wake()
-		else
-			phys:EnableMotion(false)
-			phys:Wake()
-		end
-	end
-	ent:Remove()
+	
+	if CLIENT then return true end
+	local PhysObjects = rag:GetPhysicsObjectCount()-1
+	
+	timer.Simple(0.1, function()
+		net.Start("StandPoser_Client")
+		net.WriteEntity(rag)
+		net.WriteEntity(ent)
+		net.WriteInt(PhysObjects, 8)
+		net.Send(player)
+	end)
 	
 end	
 
