@@ -103,8 +103,10 @@ net.Receive("StandPoser_Client", function()
 		local pos,ang = ent:GetBonePosition(b)
 		if pos == ent:GetPos() then
 			local matrix = ent:GetBoneMatrix(b)
-			pos = matrix:GetTranslation()
-			ang = matrix:GetAngles()
+			if matrix then
+				pos = matrix:GetTranslation()
+				ang = matrix:GetAngles()
+			end
 		end
 		net.WriteVector(pos)
 		net.WriteAngle(ang)
