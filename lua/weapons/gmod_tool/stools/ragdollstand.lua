@@ -1,33 +1,3 @@
-if SERVER then
-util.AddNetworkString("StandPose_Server")
-util.AddNetworkString("StandPoser_Client")
-
-net.Receive("StandPose_Server", function() 
-	local rag = net.ReadEntity()
-	local ent = net.ReadEntity()
-
-	for i=0,rag:GetPhysicsObjectCount()-1 do
-		local phys = rag:GetPhysicsObjectNum(i)
-		local b = rag:TranslatePhysBoneToBone(i)
-		local pos = net.ReadVector()
-		local ang = net.ReadAngle()
-		phys:EnableMotion(true)
-		phys:Wake()
-		phys:SetPos(pos)
-		phys:SetAngles(ang)
---		if string.sub(rag:GetBoneName(b),1,4) == "prp_" then
---			phys:EnableMotion(true)
---			phys:Wake()
---		else
-			phys:EnableMotion(false)
-			phys:Wake()
---		end
-	end
-	ent:Remove()
-end)
-
-end
-
 
 TOOL.Category		= "Poser"
 TOOL.Name			= "Stand Pose"
@@ -107,32 +77,6 @@ function TOOL:RightClick(tr)
 end
 
 if CLIENT then
-
-net.Receive("StandPoser_Client", function() 
-	local rag = net.ReadEntity()
-	local ent = net.ReadEntity()
-	local PhysObjects = net.ReadInt(8)
-	
-	net.Start("StandPose_Server")
-	net.WriteEntity(rag)
-	net.WriteEntity(ent)
-	for i=0,PhysObjects do
-		local phys = rag:GetPhysicsObjectNum(i)
-		local b = rag:TranslatePhysBoneToBone(i)
-		local pos,ang = ent:GetBonePosition(b)
-		if pos == ent:GetPos() then
-			local matrix = ent:GetBoneMatrix(b)
-			if matrix then
-				pos = matrix:GetTranslation()
-				ang = matrix:GetAngles()
-			end
-		end
-		net.WriteVector(pos)
-		net.WriteAngle(ang)
-	end
-	net.SendToServer()
-end)
-
 
 language.Add("tool.ragdollstand.name","Stand Pose")
 language.Add("tool.ragdollstand.desc","Position ragdolls in a standing pose.")
