@@ -35,7 +35,7 @@ net.Receive("StandPoser_Client", function()
 	local rag = net.ReadEntity()
 	local ent = net.ReadEntity()
 	local PhysObjects = net.ReadInt(8)
-	
+
 	net.Start("StandPose_Server")
 	net.WriteEntity(rag)
 	net.WriteEntity(ent)
@@ -83,15 +83,18 @@ propt.Receive = function( self, length, player )
 	if ( !IsValid( player ) ) then return end
 	if ( rag:GetClass() != "prop_ragdoll" ) then return end
 	
-	local tr = util.TraceLine({start = rag:GetPos(),endpos = rag:GetPos() - Vector(0,0,3000),filter = rag})
-	
+	local adjust = Vector(0,0,3000)
+	if not rag:IsInWorld() then adjust = Vector(0,0, -10) end
+
+	local tr = util.TraceLine({start = rag:GetPos(),endpos = rag:GetPos() - adjust,filter = rag})
+
 	local ent = ents.Create("prop_dynamic")
 	ent:SetModel(rag:GetModel())
 	ent:SetPos(tr.HitPos)
 	local angle = (tr.HitPos - player:GetPos()):Angle()
 	ent:SetAngles(Angle(0,angle.y-180,0))
 	ent:Spawn()
-	
+
 	if CLIENT then return true end
 	local PhysObjects = rag:GetPhysicsObjectCount()-1
 	
