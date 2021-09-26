@@ -24,7 +24,7 @@ function TOOL:LeftClick(tr)
 		return true
 	end
 	
-	if CLIENT then return true end
+	
 	
 	local ent = ents.Create("prop_dynamic")
 	ent:SetModel(rag:GetModel())
@@ -32,23 +32,36 @@ function TOOL:LeftClick(tr)
 	local angle = (tr.HitPos - self:GetOwner():GetPos()):Angle()
 	ent:SetAngles(Angle(0,angle.y-180,0))
 	ent:Spawn()
-	for i=0,rag:GetPhysicsObjectCount()-1 do
-		local phys = rag:GetPhysicsObjectNum(i)
-		local b = rag:TranslatePhysBoneToBone(i)
-		local pos,ang = ent:GetBonePosition(b)
-		phys:EnableMotion(true)
-		phys:Wake()
-		phys:SetPos(pos)
-		phys:SetAngles(ang)
-		if string.sub(rag:GetBoneName(b),1,4) == "prp_" then
+	
+	if CLIENT then return true end
+	local PhysObjects = rag:GetPhysicsObjectCount()-1
+	if game.SinglePlayer() then
+		timer.Simple(0.1, function()
+			net.Start("StandPoser_Client")
+			net.WriteEntity(rag)
+			net.WriteEntity(ent)
+			net.WriteInt(PhysObjects, 8)
+			net.Send(self:GetOwner())
+		end)
+	else -- if we're in multiplayer, we revert back to the old way stand pose worked, otherwise stuff will get weird
+		for i=0,PhysObjects do
+			local phys = rag:GetPhysicsObjectNum(i)
+			local b = rag:TranslatePhysBoneToBone(i)
+			local pos,ang = ent:GetBonePosition(b)
 			phys:EnableMotion(true)
 			phys:Wake()
-		else
-			phys:EnableMotion(false)
-			phys:Wake()
+			phys:SetPos(pos)
+			phys:SetAngles(ang)
+			if string.sub(rag:GetBoneName(b),1,4) == "prp_" then
+				phys:EnableMotion(true)
+				phys:Wake()
+			else
+				phys:EnableMotion(false)
+				phys:Wake()
+			end
 		end
-	end
 	ent:Remove()
+	end
 	self:SetStage(0)
 	return true
 	
