@@ -1,60 +1,62 @@
-if SERVER then
+if game.SinglePlayer() then
 
-util.AddNetworkString("StandPose_Server")
-util.AddNetworkString("StandPoser_Client")
+	if SERVER then
 
-net.Receive("StandPose_Server", function() 
-	local rag = net.ReadEntity()
-	local ent = net.ReadEntity()
+	util.AddNetworkString("StandPose_Server")
+	util.AddNetworkString("StandPoser_Client")
 
-	for i=0,rag:GetPhysicsObjectCount()-1 do
-		local phys = rag:GetPhysicsObjectNum(i)
-		local b = rag:TranslatePhysBoneToBone(i)
-		local pos = net.ReadVector()
-		local ang = net.ReadAngle()
-		phys:EnableMotion(true)
-		phys:Wake()
-		phys:SetPos(pos)
-		phys:SetAngles(ang)
---		if string.sub(rag:GetBoneName(b),1,4) == "prp_" then
---			phys:EnableMotion(true)
---			phys:Wake()
---		else
+	net.Receive("StandPose_Server", function() 
+		local rag = net.ReadEntity()
+		local ent = net.ReadEntity()
+		if (rag == ent) or not IsValid(rag) or not IsValid(ent) then return end
+		if rag:GetClass() ~= "prop_ragdoll" or ent:GetClass() ~= "prop_dynamic" then return end
+
+		for i = 0, rag:GetPhysicsObjectCount() - 1 do
+			local phys = rag:GetPhysicsObjectNum(i)
+			local b = rag:TranslatePhysBoneToBone(i)
+			local pos = net.ReadVector()
+			local ang = net.ReadAngle()
+			phys:EnableMotion(true)
+			phys:Wake()
+			phys:SetPos(pos)
+			phys:SetAngles(ang)
 			phys:EnableMotion(false)
 			phys:Wake()
---		end
-	end
-	ent:Remove()
-end)
 
-end
-
-if CLIENT then
-
-net.Receive("StandPoser_Client", function() 
-	local rag = net.ReadEntity()
-	local ent = net.ReadEntity()
-	local PhysObjects = net.ReadInt(8)
-
-	net.Start("StandPose_Server")
-	net.WriteEntity(rag)
-	net.WriteEntity(ent)
-	for i=0,PhysObjects do
-		local phys = rag:GetPhysicsObjectNum(i)
-		local b = rag:TranslatePhysBoneToBone(i)
-		local pos,ang = ent:GetBonePosition(b)
-		if pos == ent:GetPos() then
-			local matrix = ent:GetBoneMatrix(b)
-			if matrix then
-				pos = matrix:GetTranslation()
-				ang = matrix:GetAngles()
-			end
 		end
-		net.WriteVector(pos)
-		net.WriteAngle(ang)
+		ent:Remove()
+	end)
+
 	end
-	net.SendToServer()
-end)
+
+	if CLIENT then
+
+	net.Receive("StandPoser_Client", function() 
+		local rag = net.ReadEntity()
+		local ent = net.ReadEntity()
+		local PhysObjects = net.ReadInt(8)
+
+		net.Start("StandPose_Server")
+		net.WriteEntity(rag)
+		net.WriteEntity(ent)
+		for i = 0, PhysObjects do
+			local phys = rag:GetPhysicsObjectNum(i)
+			local b = rag:TranslatePhysBoneToBone(i)
+			local pos, ang = ent:GetBonePosition(b)
+			if pos == ent:GetPos() then
+				local matrix = ent:GetBoneMatrix(b)
+				if matrix then
+					pos = matrix:GetTranslation()
+					ang = matrix:GetAngles()
+				end
+			end
+			net.WriteVector(pos)
+			net.WriteAngle(ang)
+		end
+		net.SendToServer()
+	end)
+
+	end
 
 end
 
@@ -83,16 +85,16 @@ propt.Receive = function( self, length, player )
 	if ( !IsValid( player ) ) then return end
 	if ( rag:GetClass() != "prop_ragdoll" ) then return end
 	
-	local adjust = Vector(0,0,3000)
-	if not rag:IsInWorld() then adjust = Vector(0,0, -10) end
+	local adjust = Vector(0, 0, 3000)
+	if not rag:IsInWorld() then adjust = Vector(0, 0, -10) end
 
-	local tr = util.TraceLine({start = rag:GetPos(),endpos = rag:GetPos() - adjust,filter = rag})
+	local tr = util.TraceLine({start = rag:GetPos(), endpos = rag:GetPos() - adjust, filter = rag})
 
 	local ent = ents.Create("prop_dynamic")
 	ent:SetModel(rag:GetModel())
 	ent:SetPos(tr.HitPos)
 	local angle = (tr.HitPos - player:GetPos()):Angle()
-	ent:SetAngles(Angle(0,angle.y-180,0))
+	ent:SetAngles(Angle(0, angle.y - 180, 0))
 	ent:Spawn()
 
 	if CLIENT then return true end
@@ -107,15 +109,15 @@ propt.Receive = function( self, length, player )
 			net.Send(player)
 		end)
 	else -- if we're in multiplayer, we revert back to the old way stand pose worked, otherwise stuff will get weird
-		for i=0,PhysObjects do
+		for i=0, PhysObjects do
 			local phys = rag:GetPhysicsObjectNum(i)
 			local b = rag:TranslatePhysBoneToBone(i)
-			local pos,ang = ent:GetBonePosition(b)
+			local pos, ang = ent:GetBonePosition(b)
 			phys:EnableMotion(true)
 			phys:Wake()
 			phys:SetPos(pos)
 			phys:SetAngles(ang)
-			if string.sub(rag:GetBoneName(b),1,4) == "prp_" then
+			if string.sub(rag:GetBoneName(b), 1, 4) == "prp_" then
 				phys:EnableMotion(true)
 				phys:Wake()
 			else
@@ -128,4 +130,4 @@ propt.Receive = function( self, length, player )
 	
 end	
 
-properties.Add("standpose",propt)
+properties.Add("standpose", propt)
